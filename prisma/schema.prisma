@@ -1,0 +1,46 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  createdAt DateTime @default(now())
+  medias    Media[]
+}
+
+model Media {
+  id        String   @id @default(cuid())
+  ownerId   String
+  owner     User     @relation(fields: [ownerId], references: [id])
+  title     String
+  fileUrl   String
+  status    MediaStatus @default(queued) // queued | processing | done | failed
+  duration  Int?      // seconds
+  language  String? 
+  createdAt DateTime  @default(now())
+  sentences TranscriptSentence[]
+}
+
+model TranscriptSentence {
+  id        String  @id @default(cuid())
+  mediaId   String
+  media     Media   @relation(fields: [mediaId], references: [id])
+  idx       Int
+  startSec  Float
+  endSec    Float
+  text      String
+}
+
+enum MediaStatus {
+  queued
+  processing
+  done
+  failed
+}
