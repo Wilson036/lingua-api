@@ -10,9 +10,10 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { extname, join } from 'node:path';
 import * as fs from 'node:fs';
-
+import { TranscribeService } from '../auth/transcribe/transcribe.service';
 @Controller()
 export class UploadController {
+  constructor(private readonly transcribeService: TranscribeService) {}
   @Post('upload')
   @UseInterceptors(
     FileInterceptor('file', {
@@ -35,9 +36,10 @@ export class UploadController {
       },
     }),
   )
-  upload(@UploadedFile() file?: Express.Multer.File) {
+  async upload(@UploadedFile() file?: Express.Multer.File) {
     if (!file) throw new BadRequestException('NO_FILE');
     const url = `/uploads/${file.filename}`; // ⬅ 相對路徑；前端要補上主機
-    return { ok: true, url };
+    const text = await this.transcribeService.transcribeLocalFile(file.filename);
+    return { ok: true, url, text };
   }
 }
